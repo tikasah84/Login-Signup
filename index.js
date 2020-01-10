@@ -3,7 +3,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const request = require('request')
 const mongoose = require('mongoose')
-var encrypt = require('mongoose-encryption');
+const md5 = require('md5')
+
 
 let ejs = require('ejs')
 
@@ -30,7 +31,6 @@ const userSchema= new mongoose.Schema({
 
 
 
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]});
 const User = new mongoose.model("User",userSchema);
 
 app.get('/', (req, res) => res.sendFile(__dirname+"/signup.html"));
@@ -38,30 +38,47 @@ app.get('/login', (req, res) => res.sendFile(__dirname+"/login.html"));
 
 app.post("/signup.html",function(req,res){
 
+    const email = req.body.email;
+
     const newUser = new User({
             email : req.body.email,
-            password : req.body.password,
+            password : md5(req.body.password),
             firstName :req.body.fname,
             secondName : req.body.lname,
             phone : req.body.phoneNumber
 
     });
-    newUser.save(function(err){
+    
+
+    User.findOne({email:email},function(err,foundUser){
         if(err){
             console.log(err);
             
         }else{
-            res.sendFile(__dirname+"/login.html");
-        }
+            if(foundUser){
+                   console.log("Email already exist!!");
+                  
+            }else{
+
+                newUser.save(function(err){
+                    if(err){
+                        console.log(err);
+                        
+                    }else{
+                        res.sendFile(__dirname+"/login.html");
+                    }
+                });
+            }   
+        } 
     });
 });
 
+  
+
 app.post("/login.html",function(req,res){
     const email = req.body.email;
-    const password = req.body.password;
-    const firstName =req.body.fname;
-    const secondName = req.body.lname;
-    const phone = req.body.phoneNumber;
+    const password = md5(req.body.password);
+    
 
     User.findOne({email:email},function(err,foundUser){
         if(err){
