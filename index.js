@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express')
 const bodyParser = require('body-parser')
 const request = require('request')
@@ -28,8 +29,8 @@ const userSchema= new mongoose.Schema({
 });
 
 
-const secret ="secret";
-userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
+
+userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["password"]});
 const User = new mongoose.model("User",userSchema);
 
 app.get('/', (req, res) => res.sendFile(__dirname+"/signup.html"));
