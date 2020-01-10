@@ -3,7 +3,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const request = require('request')
 const mongoose = require('mongoose')
-const md5 = require('md5')
+const bcrypt = require('bcrypt')
+const saltRounds = 10
 
 
 let ejs = require('ejs')
@@ -38,11 +39,12 @@ app.get('/login', (req, res) => res.sendFile(__dirname+"/login.html"));
 
 app.post("/signup.html",function(req,res){
 
-    const email = req.body.email;
-
-    const newUser = new User({
+    bcrypt.hash(req.body.password, saltRounds, function(err, hash) {
+        const email = req.body.email;
+        // Store hash in your password DB.
+        const newUser = new User({
             email : req.body.email,
-            password : md5(req.body.password),
+            password : hash,
             firstName :req.body.fname,
             secondName : req.body.lname,
             phone : req.body.phoneNumber
@@ -50,7 +52,8 @@ app.post("/signup.html",function(req,res){
     });
     
 
-    User.findOne({email:email},function(err,foundUser){
+    User.findOne({email:req.body.email},function(err,foundUser){
+       
         if(err){
             console.log(err);
             
@@ -71,13 +74,18 @@ app.post("/signup.html",function(req,res){
             }   
         } 
     });
+      });
+
+    
+
+    
 });
 
   
 
 app.post("/login.html",function(req,res){
     const email = req.body.email;
-    const password = md5(req.body.password);
+    const password = req.body.password;
     
 
     User.findOne({email:email},function(err,foundUser){
@@ -86,14 +94,16 @@ app.post("/login.html",function(req,res){
             
         }else{
             if(foundUser){
-                if(foundUser.password === password){
-                   // res.sendFile(__dirname+"/homePage.html");
-                    res.render('index', {name: foundUser.firstName,password: foundUser.password});
-                }else{
-                    console.log("password error ");
+                bcrypt.compare(req.body.password, foundUser.password, function(err, result) {
+                    if(result == true){
+                        res.render('index', {name: foundUser.firstName,email: foundUser.email});
+                    }else{
+                        console.log("password error ");
+                    }
+                });   
                     
                     
-                }
+                
             }else{
                 console.log("No such user in database");
                 
