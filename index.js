@@ -28,7 +28,8 @@ const userSchema= new mongoose.Schema({
 });
 
 
-
+const secret ="secret";
+userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
 const User = new mongoose.model("User",userSchema);
 
 app.get('/', (req, res) => res.sendFile(__dirname+"/signup.html"));
@@ -69,7 +70,7 @@ app.post("/login.html",function(req,res){
             if(foundUser){
                 if(foundUser.password === password){
                    // res.sendFile(__dirname+"/homePage.html");
-                    res.render('index', {name: phone});
+                    res.render('index', {name: foundUser.firstName,password: foundUser.password});
                 }else{
                     console.log("password error ");
                     
